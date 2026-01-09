@@ -24,4 +24,4 @@ class Transaction(Base):
     bank_name = Column(String, nullable=True)
     cheque_no = Column(String, nullable=True)
     reference_no = Column(String, nullable=False)
-    created_at = Column(DateTime, default=datetime.now, nullable=False)
+    created_at = Column(DateTime, default=datetime.now, nullable=False, index=True)

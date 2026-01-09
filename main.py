@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from database import engine, get_db
@@ -6,10 +6,29 @@ import models, schemas
 from models import TransactionType
 from typing import List, Optional
 from datetime import datetime
+from supabase_utils import upload_database_backup
+from apscheduler.schedulers.background import BackgroundScheduler
+
+# Initialize scheduler as None
+scheduler = None
 
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
+@app.on_event("startup")
+def start_scheduler():
+    # Schedule daily backup at the end of the day (23:59)
+    global scheduler
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(func=upload_database_backup, trigger="cron", hour=23, minute=59)
+    scheduler.start()
+    print("APScheduler started: Daily backup scheduled for 23:59")
+
+@app.on_event("shutdown")
+def stop_scheduler():
+    if scheduler:
+        scheduler.shutdown()
 
 # CORS configuration
 from fastapi.middleware.cors import CORSMiddleware
@@ -157,3 +176,8 @@ def get_balance(db: Session = Depends(get_db)):
         total_debit=total_debit,
         balance=total_credit - total_debit
     )
+
+@app.post("/api/backup")
+def manual_backup(background_tasks: BackgroundTasks):
+    background_tasks.add_task(upload_database_backup)
+    return {"message": "Backup task started in background"}

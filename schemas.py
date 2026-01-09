@@ -15,12 +15,12 @@ class CreditCreate(BaseModel):
 
     @field_validator('cheque_no', 'reference_no')
     @classmethod
-    def validate_numeric_str(cls, v: Optional[str]) -> Optional[str]:
+    def validate_reference_str(cls, v: Optional[str]) -> Optional[str]:
         if v is None:
             return v
         v = v.strip()
-        if v and not re.match(r'^\d+$', v):
-            raise ValueError('Must contain only digits 0-9')
+        if v and not re.match(r'^[a-zA-Z0-9\- ]+$', v):
+            raise ValueError('Must contain only letters, digits, spaces or hyphens')
         return v
 
 class DebitCreate(BaseModel):
@@ -33,12 +33,12 @@ class DebitCreate(BaseModel):
 
     @field_validator('cheque_no', 'reference_no')
     @classmethod
-    def validate_numeric_str(cls, v: Optional[str]) -> Optional[str]:
+    def validate_reference_str(cls, v: Optional[str]) -> Optional[str]:
         if v is None:
             return v
         v = v.strip()
-        if v and not re.match(r'^\d+$', v):
-            raise ValueError('Must contain only digits 0-9')
+        if v and not re.match(r'^[a-zA-Z0-9\- ]+$', v):
+            raise ValueError('Must contain only letters, digits, spaces or hyphens')
         return v
 
 class TransactionResponse(BaseModel):
@@ -51,7 +51,7 @@ class TransactionResponse(BaseModel):
     bank_name: Optional[str] = None
     cheque_no: Optional[str] = None
     reference_no: str
-    running_balance: float
+    running_balance: Optional[float] = None
     created_at: datetime
 
     class Config:
