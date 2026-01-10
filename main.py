@@ -64,7 +64,9 @@ def create_credit(credit: schemas.CreditCreate, db: Session = Depends(get_db)):
             payment_mode=credit.payment_mode,
             bank_name=credit.bank_name,
             cheque_no=credit.cheque_no,
-            reference_no=credit.reference_no
+            reference_no=credit.reference_no,
+            transaction_date=credit.transaction_date,
+            place=credit.place
         )
         db.add(db_txn)
         db.commit()
@@ -89,7 +91,8 @@ def create_debit(debit: schemas.DebitCreate, db: Session = Depends(get_db)):
             payment_mode=debit.payment_mode,
             bank_name=debit.bank_name,
             cheque_no=debit.cheque_no,
-            reference_no=debit.reference_no
+            reference_no=debit.reference_no,
+            transaction_date=debit.transaction_date
         )
         db.add(db_txn)
         db.commit()
@@ -135,6 +138,8 @@ def get_transactions(
             "bank_name": txn.bank_name,
             "cheque_no": txn.cheque_no,
             "reference_no": txn.reference_no,
+            "transaction_date": txn.transaction_date,
+            "place": txn.place,
             "running_balance": current_balance,
             "created_at": txn.created_at
         }

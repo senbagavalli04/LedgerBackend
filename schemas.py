@@ -12,6 +12,18 @@ class CreditCreate(BaseModel):
     bank_name: Optional[str] = None
     cheque_no: Optional[str] = None
     reference_no: str
+    transaction_date: datetime
+    place: Optional[str] = None
+
+    @field_validator('place')
+    @classmethod
+    def validate_place(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        v = v.strip()
+        if v and not re.match(r'^[a-zA-Z ]+$', v):
+            raise ValueError('Place must contain only letters and spaces')
+        return v
 
     @field_validator('cheque_no', 'reference_no')
     @classmethod
@@ -30,6 +42,7 @@ class DebitCreate(BaseModel):
     bank_name: Optional[str] = None
     cheque_no: Optional[str] = None
     reference_no: str
+    transaction_date: datetime
 
     @field_validator('cheque_no', 'reference_no')
     @classmethod
@@ -51,6 +64,8 @@ class TransactionResponse(BaseModel):
     bank_name: Optional[str] = None
     cheque_no: Optional[str] = None
     reference_no: str
+    transaction_date: datetime
+    place: Optional[str] = None
     running_balance: Optional[float] = None
     created_at: datetime
 

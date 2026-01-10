@@ -22,6 +22,16 @@ if os.path.exists(db_path):
         print("Adding 'bank_name' column...")
         cursor.execute("ALTER TABLE transactions ADD COLUMN bank_name VARCHAR")
         
+    if 'transaction_date' not in columns:
+        print("Adding 'transaction_date' column...")
+        cursor.execute("ALTER TABLE transactions ADD COLUMN transaction_date DATETIME")
+        # Populate with created_at for existing rows
+        cursor.execute("UPDATE transactions SET transaction_date = created_at")
+        
+    if 'place' not in columns:
+        print("Adding 'place' column...")
+        cursor.execute("ALTER TABLE transactions ADD COLUMN place VARCHAR")
+        
     conn.commit()
     conn.close()
     print("Schema update complete.")
