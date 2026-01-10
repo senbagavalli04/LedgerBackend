@@ -35,7 +35,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 origins = [
     "http://localhost:5173",
-
+    "http://localhost:5174",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:5174",
 ]
 
 app.add_middleware(
@@ -53,6 +55,7 @@ def read_root():
 @app.post("/api/credit", response_model=schemas.TransactionResponse)
 def create_credit(credit: schemas.CreditCreate, db: Session = Depends(get_db)):
     try:
+        print(f"Creating credit entry: {credit}")
         db_txn = models.Transaction(
             transaction_type=TransactionType.CREDIT,
             name_or_purpose=credit.name_or_purpose,
@@ -66,14 +69,19 @@ def create_credit(credit: schemas.CreditCreate, db: Session = Depends(get_db)):
         db.add(db_txn)
         db.commit()
         db.refresh(db_txn)
+        print("Successfully saved credit entry")
         return db_txn
     except Exception as e:
         db.rollback()
+        import traceback
+        print(f"Error creating credit: {str(e)}")
+        traceback.print_exc()
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.post("/api/debit", response_model=schemas.TransactionResponse)
 def create_debit(debit: schemas.DebitCreate, db: Session = Depends(get_db)):
     try:
+        print(f"Creating debit entry: {debit}")
         db_txn = models.Transaction(
             transaction_type=TransactionType.DEBIT,
             name_or_purpose=debit.name_or_purpose,
@@ -86,9 +94,13 @@ def create_debit(debit: schemas.DebitCreate, db: Session = Depends(get_db)):
         db.add(db_txn)
         db.commit()
         db.refresh(db_txn)
+        print("Successfully saved debit entry")
         return db_txn
     except Exception as e:
         db.rollback()
+        import traceback
+        print(f"Error creating debit: {str(e)}")
+        traceback.print_exc()
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.get("/api/transactions")
