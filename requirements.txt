@@ -1,7 +1,5 @@
 fastapi
 uvicorn
-sqlalchemy
 pydantic
 supabase
 python-dotenv
-apscheduler

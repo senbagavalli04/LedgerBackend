@@ -1,46 +1,56 @@
 import os
 import sys
-from sqlalchemy import text
-from database import SessionLocal
-import models
+from supabase_utils import get_supabase_client
+
+def get_record_count():
+    """Returns the current number of transaction records from Supabase."""
+    supabase = get_supabase_client()
+    if not supabase:
+        return 0
+    try:
+        response = supabase.table("transactions").select("id", count="exact").execute()
+        return response.count if response.count is not None else 0
+    except Exception as e:
+        print(f"Error counting records: {e}")
+        return 0
 
 def clear_database():
     """
-    Clears all records from the 'transactions' table and resets the ID sequence.
-    This does NOT delete the database file, only the data within it.
+    Clears all records from the 'transactions' table in Supabase.
     """
-    db = SessionLocal()
+    supabase = get_supabase_client()
+    if not supabase:
+        print("Error: Could not connect to Supabase.")
+        return
+
     try:
-        print("Connecting to database and clearing transaction data...")
-        # Delete all records from transactions table
-        db.query(models.Transaction).delete()
+        print("Connecting to Supabase and clearing transaction data...")
+        # Delete all records. In Supabase/PostgREST, we filter by something always true to delete all
+        # or use a RPC if available. A common way is to filter for id is not null.
+        response = supabase.table("transactions").delete().neq("id", -1).execute()
         
-        # Reset the autoincrement ID counter for SQLite if it exists
-        try:
-            db.execute(text("DELETE FROM sqlite_sequence WHERE name='transactions'"))
-        except Exception:
-            # Table might not exist yet if no data was ever inserted
-            pass
-        
-        db.commit()
-        print("\nSUCCESS: All transaction records have been erased.")
-        print("The database structure remains intact.")
+        print("\nSUCCESS: All transaction records have been erased from Supabase.")
     except Exception as e:
-        db.rollback()
         print(f"\nERROR while clearing transaction data: {e}")
-    finally:
-        db.close()
 
 if __name__ == "__main__":
     print("=" * 50)
-    print("           DATABASE CLEANUP UTILITY")
+    print("      SUPABASE DATABASE CLEANUP UTILITY")
     print("=" * 50)
-    print("!!! WARNING: This will permanently erase all transaction records !!!")
+    
+    count = get_record_count()
+    if count == 0:
+        print("The database is already empty. No records to clear.")
+        sys.exit(0)
+        
+    print(f"!!! WARNING: This will permanently erase {count} records from SUPABASE !!!")
     print("This action cannot be undone.")
     print("-" * 50)
     
-    confirm = input("Are you absolutely sure you want to proceed? (yes/no): ")
+    confirm = input(f"Are you absolutely sure you want to delete these {count} records? (yes/no): ")
     if confirm.lower() == 'yes':
         clear_database()
     else:
         print("\nOperation cancelled. No data was deleted.")
+
+
