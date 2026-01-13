@@ -72,6 +72,17 @@ class TransactionResponse(BaseModel):
     class Config:
         from_attributes = True
 
+class TransactionUpdate(BaseModel):
+    name_or_purpose: Optional[str] = None
+    amount: Optional[float] = None
+    towards: Optional[str] = None
+    payment_mode: Optional[PaymentMode] = None
+    bank_name: Optional[str] = None
+    cheque_no: Optional[str] = None
+    reference_no: Optional[str] = None
+    transaction_date: Optional[datetime] = None
+    place: Optional[str] = None
+
 class BalanceSummary(BaseModel):
     total_credit: float
     total_debit: float

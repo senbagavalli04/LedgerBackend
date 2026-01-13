@@ -172,3 +172,59 @@ def get_balance():
 def manual_backup():
     return {"message": "Database is now managed by Supabase Cloud. Automatic backups are enabled in Supabase Dashboard."}
 
+@app.delete("/api/clear")
+def clear_all_transactions():
+    try:
+        supabase = get_supabase_client()
+        if not supabase:
+            raise HTTPException(status_code=500, detail="Supabase client not initialized")
+        
+        # Delete all records where id is not negative (all records)
+        response = supabase.table("transactions").delete().neq("id", -1).execute()
+        
+        return {"message": "All transactions cleared successfully"}
+    except Exception as e:
+        print(f"Error clearing transactions: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.delete("/api/transactions/{transaction_id}")
+def delete_transaction(transaction_id: int):
+    try:
+        supabase = get_supabase_client()
+        if not supabase:
+            raise HTTPException(status_code=500, detail="Supabase client not initialized")
+        
+        # Check if exists first (optional but good for debugging)
+        response = supabase.table("transactions").delete().eq("id", transaction_id).execute()
+        
+        if not response.data:
+            raise HTTPException(status_code=404, detail="Transaction not found or already deleted")
+            
+        return {"message": "Transaction deleted successfully"}
+    except Exception as e:
+        print(f"Error deleting transaction: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.put("/api/transactions/{transaction_id}", response_model=schemas.TransactionResponse)
+def update_transaction(transaction_id: int, transaction: schemas.TransactionUpdate):
+    try:
+        supabase = get_supabase_client()
+        if not supabase:
+            raise HTTPException(status_code=500, detail="Supabase client not initialized")
+        
+        data = transaction.model_dump(exclude_unset=True)
+        
+        # Handle datetime
+        if "transaction_date" in data and data["transaction_date"]:
+            data["transaction_date"] = data["transaction_date"].isoformat()
+            
+        response = supabase.table("transactions").update(data).eq("id", transaction_id).execute()
+        
+        if not response.data:
+            raise HTTPException(status_code=404, detail="Transaction not found")
+            
+        return response.data[0]
+    except Exception as e:
+        print(f"Error updating transaction: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
+
