@@ -72,6 +72,7 @@ class TransactionResponse(BaseModel):
     class Config:
         from_attributes = True
 
+
 class TransactionUpdate(BaseModel):
     name_or_purpose: Optional[str] = None
     amount: Optional[float] = None
