@@ -102,9 +102,9 @@ def get_transactions(
         if not supabase:
             raise HTTPException(status_code=500, detail="Supabase client not initialized")
 
-        # Fetch ALL to calculate running balance (as was done in the SQLite version)
+        # Fetch ALL non-deleted to calculate running balance
         # We sort by created_at ascending for balance calculation
-        query = supabase.table("transactions").select("*").order("created_at", desc=False)
+        query = supabase.table("transactions").select("*").eq("is_deleted", False).order("created_at", desc=False)
         response = query.execute()
         
         all_txns = response.data
@@ -153,7 +153,7 @@ def get_balance():
         if not supabase:
             raise HTTPException(status_code=500, detail="Supabase client not initialized")
 
-        response = supabase.table("transactions").select("amount, transaction_type").execute()
+        response = supabase.table("transactions").select("amount, transaction_type").eq("is_deleted", False).execute()
         txns = response.data
         
         total_credit = sum(t["amount"] for t in txns if t["transaction_type"] == TransactionType.CREDIT)
@@ -179,8 +179,8 @@ def clear_all_transactions():
         if not supabase:
             raise HTTPException(status_code=500, detail="Supabase client not initialized")
         
-        # Delete all records where id is not negative (all records)
-        response = supabase.table("transactions").delete().neq("id", -1).execute()
+        # Soft delete all records
+        response = supabase.table("transactions").update({"is_deleted": True}).neq("id", -1).execute()
         
         return {"message": "All transactions cleared successfully"}
     except Exception as e:
@@ -194,8 +194,8 @@ def delete_transaction(transaction_id: int):
         if not supabase:
             raise HTTPException(status_code=500, detail="Supabase client not initialized")
         
-        # Check if exists first (optional but good for debugging)
-        response = supabase.table("transactions").delete().eq("id", transaction_id).execute()
+        # Soft delete instead of hard delete
+        response = supabase.table("transactions").update({"is_deleted": True}).eq("id", transaction_id).execute()
         
         if not response.data:
             raise HTTPException(status_code=404, detail="Transaction not found or already deleted")
